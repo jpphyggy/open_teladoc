@@ -1,0 +1,32 @@
+id: maj_quotidien
+namespace: teladoc
+
+tasks:
+  - id: workingDirectory
+    type: io.kestra.core.tasks.flows.WorkingDirectory
+    tasks:
+    - id: cloneRepository
+      type: io.kestra.plugin.git.Clone
+      privateKey : "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"
+      url: https://github.com/jpphyggy/teladoc/
+      branch: main
+    
+    - id: pythonScript
+      type: io.kestra.plugin.scripts.python.Commands
+      warningOnStdErr: false
+      docker:
+        image: ghcr.io/kestra-io/pydata:latest
+      beforeCommands:
+        - pip install -r requirements.txt > /dev/null
+        - pip install ipykernel jupyter_server papermill
+        - python -m ipykernel install --name python3.12.0
+      commands:
+        - papermill teladoc_test.ipynb output.ipynb
+      outputFiles:
+          - output.ipynb
+triggers:
+  - id: schedule
+    type: io.kestra.core.models.triggers.types.Schedule
+    cron: "0 6 * * *"
+    backfill:
+      start: 2023-12-03T00:00:00Z
